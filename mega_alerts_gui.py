@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget
 from PyQt5 import QtGui
 import sys, os
 from sys import exit
@@ -43,6 +43,14 @@ class LabelText(QMainWindow):
         self.Label.resize(width,height)
         self.Label.setFont((QtGui.QFont("Arial",12,QtGui.QFont.Bold)))
 
+class ListView(QMainWindow):
+    def __init__(self,parent=None, xposition=None,yposition=None, width=None, height=None):
+        super(ListView,self).__init__()
+        self.List = QListWidget(parent)
+        self.List.move(xposition,yposition)
+        self.List.resize(width,height)
+        self.List.setFont((QtGui.QFont("Arial",12,QtGui.QFont.Bold)))
+
 class App(QMainWindow):
 
     def __init__(self):
@@ -50,7 +58,7 @@ class App(QMainWindow):
         self.title = 'Mega Alerts App'
         self.left = 0
         self.top = 0
-        self.width = 500
+        self.width = 750
         self.height = 750
 
         self.path_to_data = os.path.join(os.getcwd(), "mega_data.json")
@@ -58,6 +66,9 @@ class App(QMainWindow):
         self.path_to_desired_pets = os.path.join(os.getcwd(), "desired_pets.json")
         self.path_to_desired_ilvl_items = os.path.join(os.getcwd(), "desired_ilvl.json")
         self.path_to_desired_ilvl_list = os.path.join(os.getcwd(), "desired_ilvl_list.json")
+
+        self.pet_list = {}
+        self.pet_list_labels = []
 
         self.initUI()
 
@@ -91,9 +102,26 @@ class App(QMainWindow):
         self.stop_button.Button.clicked.connect(self.stop_alerts)
         self.stop_button.Button.setEnabled(False)
 
+        self.pet_id_input=LabelTextbox(self,"Pet ID",500,25,100,40)
+        self.pet_price_input=LabelTextbox(self,"Price",625,25,100,40)
+
+        self.add_pet_button = UIButtons(self, "Add Pet", 500, 100, 100, 50)
+        self.add_pet_button.Button.clicked.connect(self.add_pet_to_dict)
+        self.remove_pet_button = UIButtons(self, "Remove\nPet", 625, 100, 100, 50)
+        self.remove_pet_button.Button.clicked.connect(self.remove_pet_to_dict)
+
+        self.pet_list_display = ListView(self,500,175,225,400)
+        self.pet_list_display.List.itemDoubleClicked.connect(self.pet_list_double_clicked)
+
         self.check_for_settings()
 
         self.show()
+
+    def pet_list_double_clicked(self,item):
+        item_split = item.text().replace(' ', '').split(':')
+        pet_id = item_split[1].split(',')[0]
+        self.pet_id_input.Text.setText(pet_id)
+        self.pet_price_input.Text.setText(item_split[2])
 
     def check_for_settings(self):
         if os.path.exists(self.path_to_data):
@@ -118,9 +146,27 @@ class App(QMainWindow):
                 if index>=0:
                     self.wow_head_link.Combo.setCurrentIndex(index)
 
+    def add_pet_to_dict(self):
+        if self.pet_id_input.Text.text() == "" or self.pet_price_input.Text.text() == "":
+            return 0
+        
+        if self.pet_id_input.Text.text() not in self.pet_list:
+            self.pet_list[self.pet_id_input.Text.text()] = self.pet_price_input.Text.text()
+            self.pet_list_display.List.insertItem(self.pet_list_display.List.count() , f'Pet ID: {self.pet_id_input.Text.text()}, Price: {self.pet_price_input.Text.text()}')
+
+    def remove_pet_to_dict(self):
+        if self.pet_id_input.Text.text() in self.pet_list:
+            for x in range(self.pet_list_display.List.count()):
+                if self.pet_list_display.List.item(x).text() == f'Pet ID: {self.pet_id_input.Text.text()}, Price: {self.pet_list[self.pet_id_input.Text.text()]}':
+
+                    self.pet_list_display.List.takeItem(x)
+                    del self.pet_list[self.pet_id_input.Text.text()]
+                    return
+
     def start_alerts(self):
         self.start_button.Button.setEnabled(False)
         self.stop_button.Button.setEnabled(True)
+
         config_json ={
             'MEGA_WEBHOOK_URL': self.discord_webhook_input.Text.text(),
             'WOW_CLIENT_ID': self.wow_client_id_input.Text.text(),
@@ -134,6 +180,9 @@ class App(QMainWindow):
 
         with open(self.path_to_data, 'w') as json_file:
             json.dump(config_json, json_file, indent=4)
+
+        with open(self.path_to_desired_pets, 'w') as json_file:
+            json.dump(self.pet_list, json_file, indent=4)
 
         self.alerts_thread = alerts(
             self.path_to_data,

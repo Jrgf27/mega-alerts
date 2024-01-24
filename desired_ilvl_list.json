@@ -1,11 +1,2 @@
 [
-    {
-        "ilvl": 457, 
-        "buyout":175001, 
-        "sockets": false, 
-        "speed": false, 
-        "leech": false, 
-        "avoidance": false,
-        "item_ids": [208420]
-    }
 ]

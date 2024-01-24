@@ -182,10 +182,10 @@ class MegaData:
         return item_names
 
     def __set_desired_items(self, item_list_name, path_to_data=None):
-        
+        file_name = f"{item_list_name}.json"
+        env_var_name = item_list_name.upper()
         if path_to_data == None:
-            file_name = f"{item_list_name}.json"
-            env_var_name = item_list_name.upper()
+            
             desired_items_raw = json.load(open(f"user_data/mega/{file_name}"))
         else:
             desired_items_raw = json.load(open(path_to_data))
@@ -205,12 +205,12 @@ class MegaData:
         return desired_items
 
     def __set_desired_ilvl_single(self, path_to_data=None):
+        item_list_name = "desired_ilvl"
+        file_name = f"{item_list_name}.json"
+        env_var_name = item_list_name.upper()
+
         if path_to_data == None:
-            item_list_name = "desired_ilvl"
-            file_name = f"{item_list_name}.json"
-            env_var_name = item_list_name.upper()
             ilvl_info = json.load(open(f"user_data/mega/{file_name}"))
-        
         else:
             ilvl_info = json.load(open(path_to_data))
 
@@ -228,10 +228,10 @@ class MegaData:
         return DESIRED_ILVL_ITEMS, min_ilvl
 
     def __set_desired_ilvl_list(self, path_to_data=None):
+        item_list_name = "desired_ilvl_list"
+        file_name = f"{item_list_name}.json"
+        env_var_name = item_list_name.upper()
         if path_to_data == None:
-            item_list_name = "desired_ilvl_list"
-            file_name = f"{item_list_name}.json"
-            env_var_name = item_list_name.upper()
             ilvl_info = json.load(open(f"user_data/mega/{file_name}"))
         else:
             ilvl_info = json.load(open(path_to_data))
