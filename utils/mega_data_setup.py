@@ -9,9 +9,17 @@ from utils.helpers import get_wow_russian_realm_ids
 
 
 class MegaData:
-    def __init__(self):
+    def __init__(self, 
+                 path_to_data_files=None, 
+                 path_to_desired_items = None, 
+                 path_to_desired_pets = None,
+                 path_to_desired_ilvl_items = None,
+                 path_to_desired_ilvl_list = None,):
         # the raw file users can write their input into
-        raw_mega_data = json.load(open("user_data/mega/mega_data.json"))
+        if path_to_data_files == None:
+            raw_mega_data = json.load(open("user_data/mega/mega_data.json"))
+        else:
+            raw_mega_data = json.load(open(path_to_data_files))
 
         self.THREADS = self.__set_mega_vars("MEGA_THREADS", raw_mega_data)
         self.SCAN_TIME_MIN = self.__set_mega_vars("SCAN_TIME_MIN", raw_mega_data)
@@ -36,10 +44,10 @@ class MegaData:
         self.access_token = self.check_access_token()
 
         # setup items to snipe
-        self.DESIRED_ITEMS = self.__set_desired_items("desired_items")
-        self.DESIRED_PETS = self.__set_desired_items("desired_pets")
-        self.DESIRED_ILVL_ITEMS, self.min_ilvl = self.__set_desired_ilvl_single()
-        self.DESIRED_ILVL_LIST = self.__set_desired_ilvl_list()
+        self.DESIRED_ITEMS = self.__set_desired_items("desired_items", path_to_desired_items)
+        self.DESIRED_PETS = self.__set_desired_items("desired_pets", path_to_desired_pets)
+        self.DESIRED_ILVL_ITEMS, self.min_ilvl = self.__set_desired_ilvl_single(path_to_desired_ilvl_items)
+        self.DESIRED_ILVL_LIST = self.__set_desired_ilvl_list(path_to_desired_ilvl_list)
         self.__validate_snipe_lists()
 
         ## should do this here and only get the names of desired items to limit data
@@ -173,10 +181,14 @@ class MegaData:
         }
         return item_names
 
-    def __set_desired_items(self, item_list_name):
-        file_name = f"{item_list_name}.json"
-        env_var_name = item_list_name.upper()
-        desired_items_raw = json.load(open(f"user_data/mega/{file_name}"))
+    def __set_desired_items(self, item_list_name, path_to_data=None):
+        
+        if path_to_data == None:
+            file_name = f"{item_list_name}.json"
+            env_var_name = item_list_name.upper()
+            desired_items_raw = json.load(open(f"user_data/mega/{file_name}"))
+        else:
+            desired_items_raw = json.load(open(path_to_data))
         # if file is not set use env var
         if len(desired_items_raw) == 0:
             print(
@@ -192,11 +204,16 @@ class MegaData:
             desired_items[int(k)] = int(v)
         return desired_items
 
-    def __set_desired_ilvl_single(self):
-        item_list_name = "desired_ilvl"
-        file_name = f"{item_list_name}.json"
-        env_var_name = item_list_name.upper()
-        ilvl_info = json.load(open(f"user_data/mega/{file_name}"))
+    def __set_desired_ilvl_single(self, path_to_data=None):
+        if path_to_data == None:
+            item_list_name = "desired_ilvl"
+            file_name = f"{item_list_name}.json"
+            env_var_name = item_list_name.upper()
+            ilvl_info = json.load(open(f"user_data/mega/{file_name}"))
+        
+        else:
+            ilvl_info = json.load(open(path_to_data))
+
         # if file is not set use env var
         if len(ilvl_info) == 0:
             print(
@@ -210,11 +227,15 @@ class MegaData:
         DESIRED_ILVL_ITEMS, min_ilvl = self.__set_desired_ilvl(ilvl_info)
         return DESIRED_ILVL_ITEMS, min_ilvl
 
-    def __set_desired_ilvl_list(self):
-        item_list_name = "desired_ilvl_list"
-        file_name = f"{item_list_name}.json"
-        env_var_name = item_list_name.upper()
-        ilvl_info = json.load(open(f"user_data/mega/{file_name}"))
+    def __set_desired_ilvl_list(self, path_to_data=None):
+        if path_to_data == None:
+            item_list_name = "desired_ilvl_list"
+            file_name = f"{item_list_name}.json"
+            env_var_name = item_list_name.upper()
+            ilvl_info = json.load(open(f"user_data/mega/{file_name}"))
+        else:
+            ilvl_info = json.load(open(path_to_data))
+
         # if file is not set use env var
         if len(ilvl_info) == 0:
             print(
