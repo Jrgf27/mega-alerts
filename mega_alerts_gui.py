@@ -119,6 +119,8 @@ class App(QMainWindow):
         self.stop_button.Button.clicked.connect(self.stop_alerts)
         self.stop_button.Button.setEnabled(False)
 
+        self.mega_alerts_progress = LabelText(self, 'Waiting for user to Start!', 25, 675, 1000, 40)
+
         ########################## PET STUFF ###################################################
 
         self.pet_id_input=LabelTextbox(self,"Pet ID",500,25,100,40)
@@ -392,16 +394,22 @@ class App(QMainWindow):
             path_to_desired_ilvl_list = self.path_to_desired_ilvl_list
             )
         self.alerts_thread.start()
+        self.alerts_thread.progress.connect(self.alerts_progress_changed)
         self.alerts_thread.finished.connect(self.alerts_thread_finished)
 
     def stop_alerts(self):
         self.alerts_thread.running=False
         self.stop_button.Button.setText('Stopping Process')
+        self.alerts_progress_changed("Stopping alerts!")
         self.stop_button.Button.setEnabled(False)
 
     def alerts_thread_finished(self):
         self.stop_button.Button.setText("Stop Alerts")
         self.start_button.Button.setEnabled(True)
+        self.alerts_progress_changed('Waiting for user to Start!')
+
+    def alerts_progress_changed(self, progress_str):
+        self.mega_alerts_progress.Label.setText(progress_str)
 
 if __name__ == '__main__':
     

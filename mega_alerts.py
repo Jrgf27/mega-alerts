@@ -12,7 +12,8 @@ import utils.mega_data_setup
 
 class Alerts(QThread):
 
-    completed=pyqtSignal(int)
+    completed = pyqtSignal(int)
+    progress = pyqtSignal(str)
 
     def __init__(self, path_to_data_files=None, path_to_desired_items=None, path_to_desired_pets=None, path_to_desired_ilvl_items=None, path_to_desired_ilvl_list=None):
         super(Alerts,self).__init__()
@@ -388,12 +389,14 @@ class Alerts(QThread):
                         ]
 
                 if matching_realms != []:
+                    self.progress.emit("Sending alerts!")
                     pool = ThreadPoolExecutor(max_workers=mega_data.THREADS)
                     for connected_id in matching_realms:
                         pool.submit(pull_single_realm_data, connected_id)
                     pool.shutdown(wait=True)
 
                 else:
+                    self.progress.emit(f"The updates will come on minute {list(mega_data.get_upload_time_minutes())[0]} of each hour.")
                     print(
                         f"Blizzard API data only updates 1 time per hour. The updates will come on minute {mega_data.get_upload_time_minutes()} of each hour. "
                         + f"{datetime.now()} is not the update time. "
@@ -404,6 +407,7 @@ class Alerts(QThread):
                     )
                     time.sleep(20)
             
+            self.progress.emit("Stopped alerts!")
             self.completed.emit(1)
 
         def main_single():
@@ -412,12 +416,14 @@ class Alerts(QThread):
                 pull_single_realm_data(connected_id)
 
         def main_fast():
+            self.progress.emit("Sending alerts!")
             # run everything once fast
             pool = ThreadPoolExecutor(max_workers=mega_data.THREADS)
             for connected_id in set(mega_data.WOW_SERVER_NAMES.values()):
                 pool.submit(pull_single_realm_data, connected_id)
             pool.shutdown(wait=True)
 
+        self.progress.emit("Setting data and config variables!")
         print("Sleep 10 sec on start to avoid spamming the api")
         time.sleep(10)
 
