@@ -64,7 +64,7 @@ class App(QMainWindow):
 
     def __init__(self):
         super(App,self).__init__()
-        self.title = 'Mega Alerts App'
+        self.title = 'Azeroth Auction Assassin'
         self.left = 0
         self.top = 0
         self.width = 1650
@@ -96,7 +96,7 @@ class App(QMainWindow):
         self.discord_webhook_input=LabelTextbox(self,"Discord Webhook",25,25,425,40)
         self.wow_client_id_input=LabelTextbox(self,"WoW Client ID",25,100,425,40)
         self.wow_client_secret_input=LabelTextbox(self,"WoW Client Secret",25,175,425,40)
-        self.authentication_token=LabelTextbox(self,"Authentication Token",25,250,425,40)
+        self.authentication_token=LabelTextbox(self,"Auction Assassin Token",25,250,425,40)
 
         self.wow_region_label = LabelText(self, 'Wow Region', 25, 325, 200, 40)
         self.wow_region=ComboBoxes(self,25,325,200,40)
@@ -271,6 +271,9 @@ class App(QMainWindow):
                                                    f"Item ID: {ilvl_dict_data['item_ids'][0]}, Price: {ilvl_dict_data['buyout']}, ILvl: {ilvl_dict_data['ilvl']}, Sockets: {ilvl_dict_data['sockets']}, Speed: {ilvl_dict_data['speed']}, Leech: {ilvl_dict_data['leech']}, Avoidance: {ilvl_dict_data['avoidance']}")
 
     def remove_ilvl_to_list(self):
+        if len(self.ilvl_item_input.Text.text()) == 0:
+            QMessageBox.critical(self, "Ilvl Removal Issue", "Please double click an ilvl json to remove it!")
+            return
         ilvl_dict_data = {
             'ilvl': int(self.ilvl_input.Text.text()),
             'buyout': int(self.ilvl_price_input.Text.text()),
@@ -348,18 +351,18 @@ class App(QMainWindow):
             QMessageBox.critical(self, "Request Error", f"Could not reach server, status code : {response.status_code}")
             return
 
-        if len(response_dict) == 0 :
-            QMessageBox.critical(self, "Authentication Token", "Please provide a valid authentication token!")
+        if len(response_dict) == 0:
+            QMessageBox.critical(self, "Auction Assassin Token", "Please provide a valid Auction Assassin token!")
             return
 
         if not response_dict['succeeded']:
-            QMessageBox.critical(self, "Authentication Token", "Please provide a valid authentication token!")
+            QMessageBox.critical(self, "Auction Assassin Token", "Please provide a valid Auction Assassin token!")
             return
         
         self.start_button.Button.setEnabled(False)
         self.stop_button.Button.setEnabled(True)
 
-        config_json ={
+        config_json = {
             'MEGA_WEBHOOK_URL': self.discord_webhook_input.Text.text(),
             'WOW_CLIENT_ID': self.wow_client_id_input.Text.text(),
             'WOW_CLIENT_SECRET': self.wow_client_secret_input.Text.text(),
