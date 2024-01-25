@@ -3,3 +3,4 @@ data/upload_timers.json
 mega_data.json
 output
 dist
+venv
