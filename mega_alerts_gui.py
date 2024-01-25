@@ -68,7 +68,6 @@ class App(QMainWindow):
         self.path_to_desired_ilvl_list = os.path.join(os.getcwd(), "desired_ilvl_list.json")
 
         self.pet_list = {}
-        self.pet_list_labels = []
 
         self.initUI()
 
@@ -145,6 +144,11 @@ class App(QMainWindow):
                 index=self.wow_head_link.Combo.findText(str(raw_mega_data['WOWHEAD_LINK']))
                 if index>=0:
                     self.wow_head_link.Combo.setCurrentIndex(index)
+
+        if os.path.exists(self.path_to_desired_pets):
+            self.pet_list = json.load(open(self.path_to_desired_pets))
+            for key,value in self.pet_list.items():
+                self.pet_list_display.List.insertItem(self.pet_list_display.List.count() , f'Pet ID: {key}, Price: {value}')
 
     def add_pet_to_dict(self):
         if self.pet_id_input.Text.text() == "" or self.pet_price_input.Text.text() == "":
