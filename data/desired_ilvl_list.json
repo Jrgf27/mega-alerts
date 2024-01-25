@@ -42,5 +42,34 @@
         "item_ids": [
             208434
         ]
+    },
+    {
+        "ilvl": 457,
+        "buyout": 175001,
+        "sockets": true,
+        "speed": true,
+        "leech": false,
+        "avoidance": true,
+        "item_ids": [
+            20,
+            84,
+            30
+        ]
+    },
+    {
+        "ilvl": 457,
+        "buyout": 175001,
+        "sockets": true,
+        "speed": true,
+        "leech": false,
+        "avoidance": true,
+        "item_ids": [
+            20,
+            84,
+            30,
+            98,
+            34,
+            234652
+        ]
     }
 ]
