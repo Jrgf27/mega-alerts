@@ -10,12 +10,12 @@ from utils.helpers import (
 from PyQt5.QtCore import QThread, pyqtSignal
 import utils.mega_data_setup
 
-class alerts(QThread):
+class Alerts(QThread):
 
     completed=pyqtSignal(int)
 
     def __init__(self, path_to_data_files=None, path_to_desired_items=None, path_to_desired_pets=None, path_to_desired_ilvl_items=None, path_to_desired_ilvl_list=None):
-        super(alerts,self).__init__()
+        super(Alerts,self).__init__()
         self.running=True
         self.path_to_data_files=path_to_data_files
         self.path_to_desired_items= path_to_desired_items
@@ -461,5 +461,5 @@ class alerts(QThread):
             main()
 
 if __name__ == '__main__':
-    fun = alerts()
+    fun = Alerts()
     fun.run()

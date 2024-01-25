@@ -1,2 +1,46 @@
 [
+    {
+        "ilvl": 457,
+        "buyout": 175001,
+        "sockets": true,
+        "speed": true,
+        "leech": false,
+        "avoidance": true,
+        "item_ids": [
+            208420
+        ]
+    },
+    {
+        "ilvl": 457,
+        "buyout": 175001,
+        "sockets": true,
+        "speed": true,
+        "leech": false,
+        "avoidance": true,
+        "item_ids": [
+            208427
+        ]
+    },
+    {
+        "ilvl": 457,
+        "buyout": 175001,
+        "sockets": true,
+        "speed": true,
+        "leech": false,
+        "avoidance": true,
+        "item_ids": [
+            208430
+        ]
+    },
+    {
+        "ilvl": 457,
+        "buyout": 175001,
+        "sockets": true,
+        "speed": true,
+        "leech": false,
+        "avoidance": true,
+        "item_ids": [
+            208434
+        ]
+    }
 ]

@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox, QCheckBox
 from PyQt5 import QtGui
 import sys, os
 import requests
 from sys import exit
 import json
-from mega_alerts import alerts
+from mega_alerts import Alerts
 
 
 class LabelTextbox(QMainWindow):
@@ -53,6 +53,13 @@ class ListView(QMainWindow):
         self.List.resize(width,height)
         self.List.setFont((QtGui.QFont("Arial",12,QtGui.QFont.Bold)))
 
+class CheckBox(QMainWindow):
+    def __init__(self,parent=None,labeltext=None,xposition=None,yposition=None, width=None, height=None):
+        super(CheckBox,self).__init__()
+        self.Checkbox=QCheckBox(labeltext,parent)
+        self.Checkbox.setGeometry(xposition,yposition,width,height)
+        self.Checkbox.setFont((QtGui.QFont("Arial",12,QtGui.QFont.Bold)))
+
 class App(QMainWindow):
 
     def __init__(self):
@@ -60,7 +67,7 @@ class App(QMainWindow):
         self.title = 'Mega Alerts App'
         self.left = 0
         self.top = 0
-        self.width = 1000
+        self.width = 1650
         self.height = 750
 
         self.token_auth_url = "http://api.saddlebagexchange.com/api/wow/checkmegatoken"
@@ -76,6 +83,8 @@ class App(QMainWindow):
 
         self.pet_list = {}
         self.items_list = {}
+        self.ilvl_list = []
+        self.ilvl_items = {}
 
         self.initUI()
 
@@ -136,6 +145,25 @@ class App(QMainWindow):
         self.item_list_display = ListView(self,750,175,225,400)
         self.item_list_display.List.itemDoubleClicked.connect(self.item_list_double_clicked)
 
+        ########################## ILVL STUFF ###################################################
+
+        self.ilvl_item_input=LabelTextbox(self,"Item ID",1000,25,100,40)
+        self.ilvl_input=LabelTextbox(self,"Item level",1000,100,100,40)
+        self.ilvl_price_input=LabelTextbox(self,"Buyout",1000,175,100,40)
+
+        self.ilvl_sockets=CheckBox(self,"Sockets",1000,225,100,40)
+        self.ilvl_speed=CheckBox(self,"Speed",1000,275,100,40)
+        self.ilvl_leech=CheckBox(self,"Leech",1000,325,100,40)
+        self.ilvl_avoidance=CheckBox(self,"Avoidance",1000,375,100,40)
+
+        self.add_ilvl_button = UIButtons(self, "Add Item", 1000, 425, 100, 50)
+        self.add_ilvl_button.Button.clicked.connect(self.add_ilvl_to_list)
+        self.remove_ilvl_button = UIButtons(self, "Remove\nItem", 1000, 500, 100, 50)
+        self.remove_ilvl_button.Button.clicked.connect(self.remove_ilvl_to_list)
+
+        self.ilvl_list_display = ListView(self,1125,25,500,600)
+        self.ilvl_list_display.List.itemDoubleClicked.connect(self.ilvl_list_double_clicked)
+
         self.check_for_settings()
 
         self.show()
@@ -183,7 +211,6 @@ class App(QMainWindow):
             except:
                 QMessageBox.critical(self, "Loading Error", "Could not load config settings from mega_data.json")
                 
-
         if os.path.exists(self.path_to_desired_pets):
             self.pet_list = json.load(open(self.path_to_desired_pets))
             for key,value in self.pet_list.items():
@@ -193,6 +220,73 @@ class App(QMainWindow):
             self.items_list = json.load(open(self.path_to_desired_items))
             for key,value in self.items_list.items():
                 self.item_list_display.List.insertItem(self.item_list_display.List.count() , f'Item ID: {key}, Price: {value}')
+
+        if os.path.exists(self.path_to_desired_ilvl_list):
+            self.ilvl_list = json.load(open(self.path_to_desired_ilvl_list))
+            for ilvl_dict_data in self.ilvl_list:
+                string_with_data = f"Item ID: {ilvl_dict_data['item_ids'][0]}, Price: {ilvl_dict_data['buyout']}, ILvl: {ilvl_dict_data['ilvl']}, Sockets: {ilvl_dict_data['sockets']}, Speed: {ilvl_dict_data['speed']}, Leech: {ilvl_dict_data['leech']}, Avoidance: {ilvl_dict_data['avoidance']}"
+                self.ilvl_list_display.List.insertItem(self.ilvl_list_display.List.count() , string_with_data)
+
+
+    def ilvl_list_double_clicked(self,item):
+        item_split = item.text().replace(' ', '').split(':')
+
+        item_id = item_split[1].split(',')[0]
+        buyout = item_split[2].split(',')[0]
+        ilvl = item_split[3].split(',')[0]
+        sockets = item_split[4].split(',')[0]
+        speed = item_split[5].split(',')[0]
+        leech = item_split[6].split(',')[0]
+        avoidance = item_split[7]
+
+        self.ilvl_item_input.Text.setText(item_id)
+        self.ilvl_price_input.Text.setText(buyout)
+
+        self.ilvl_sockets.Checkbox.setChecked(sockets == "True")
+        self.ilvl_speed.Checkbox.setChecked(speed == "True")
+        self.ilvl_leech.Checkbox.setChecked(leech == "True")
+        self.ilvl_avoidance.Checkbox.setChecked(avoidance == "True")
+
+        self.ilvl_input.Text.setText(ilvl)
+
+    def add_ilvl_to_list(self):
+        if self.ilvl_input.Text.text() == "" or self.ilvl_price_input.Text.text() == "" or self.ilvl_item_input.Text.text() == "":
+            return 0
+        
+        ilvl_dict_data = {
+            'ilvl': int(self.ilvl_input.Text.text()),
+            'buyout': int(self.ilvl_price_input.Text.text()),
+            'sockets': self.ilvl_sockets.Checkbox.isChecked(),
+            'speed': self.ilvl_speed.Checkbox.isChecked(),
+            'leech': self.ilvl_leech.Checkbox.isChecked(),
+            'avoidance': self.ilvl_avoidance.Checkbox.isChecked(),
+            'item_ids': [int(self.ilvl_item_input.Text.text())],
+
+        }
+        if ilvl_dict_data not in self.ilvl_list:
+            self.ilvl_list.append(ilvl_dict_data)
+            self.ilvl_list_display.List.insertItem(self.ilvl_list_display.List.count() , 
+                                                   f"Item ID: {ilvl_dict_data['item_ids'][0]}, Price: {ilvl_dict_data['buyout']}, ILvl: {ilvl_dict_data['ilvl']}, Sockets: {ilvl_dict_data['sockets']}, Speed: {ilvl_dict_data['speed']}, Leech: {ilvl_dict_data['leech']}, Avoidance: {ilvl_dict_data['avoidance']}")
+
+    def remove_ilvl_to_list(self):
+        ilvl_dict_data = {
+            'ilvl': int(self.ilvl_input.Text.text()),
+            'buyout': int(self.ilvl_price_input.Text.text()),
+            'sockets': self.ilvl_sockets.Checkbox.isChecked(),
+            'speed': self.ilvl_speed.Checkbox.isChecked(),
+            'leech': self.ilvl_leech.Checkbox.isChecked(),
+            'avoidance': self.ilvl_avoidance.Checkbox.isChecked(),
+            'item_ids': [int(self.ilvl_item_input.Text.text())],
+        }
+
+        if ilvl_dict_data in self.ilvl_list:
+            string_with_data = f"Item ID: {ilvl_dict_data['item_ids'][0]}, Price: {ilvl_dict_data['buyout']}, ILvl: {ilvl_dict_data['ilvl']}, Sockets: {ilvl_dict_data['sockets']}, Speed: {ilvl_dict_data['speed']}, Leech: {ilvl_dict_data['leech']}, Avoidance: {ilvl_dict_data['avoidance']}"
+            for x in range(self.ilvl_list_display.List.count()):
+                if self.ilvl_list_display.List.item(x).text() == string_with_data:
+                    self.ilvl_list_display.List.takeItem(x)
+                    self.ilvl_list.remove(ilvl_dict_data)
+                    return
+
 
     def item_list_double_clicked(self,item):
         item_split = item.text().replace(' ', '').split(':')
@@ -284,16 +378,21 @@ class App(QMainWindow):
         with open(self.path_to_desired_items, 'w') as json_file:
             json.dump(self.items_list, json_file, indent=4)
 
-        self.alerts_thread = alerts(
-            self.path_to_data,
-            self.path_to_desired_items,
-            self.path_to_desired_pets,
-            self.path_to_desired_ilvl_items,
-            self.path_to_desired_ilvl_list
+        with open(self.path_to_desired_ilvl_list, 'w') as json_file:
+            json.dump(self.ilvl_list, json_file, indent=4)
+        
+        with open(self.path_to_desired_ilvl_items, 'w') as json_file:
+            json.dump(self.ilvl_items, json_file, indent=4)
+
+        self.alerts_thread = Alerts(
+            path_to_data_files = self.path_to_data,
+            path_to_desired_items = self.path_to_desired_items,
+            path_to_desired_pets = self.path_to_desired_pets,
+            path_to_desired_ilvl_items = self.path_to_desired_ilvl_items,
+            path_to_desired_ilvl_list = self.path_to_desired_ilvl_list
             )
         self.alerts_thread.start()
         self.alerts_thread.finished.connect(self.alerts_thread_finished)
-
 
     def stop_alerts(self):
         self.alerts_thread.running=False
