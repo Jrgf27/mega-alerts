@@ -1,9 +1,11 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox
 from PyQt5 import QtGui
 import sys, os
+import requests
 from sys import exit
 import json
 from mega_alerts import alerts
+
 
 class LabelTextbox(QMainWindow):
 
@@ -58,16 +60,22 @@ class App(QMainWindow):
         self.title = 'Mega Alerts App'
         self.left = 0
         self.top = 0
-        self.width = 750
+        self.width = 1000
         self.height = 750
 
-        self.path_to_data = os.path.join(os.getcwd(), "mega_data.json")
-        self.path_to_desired_items = os.path.join(os.getcwd(), "desired_items.json")
-        self.path_to_desired_pets = os.path.join(os.getcwd(), "desired_pets.json")
-        self.path_to_desired_ilvl_items = os.path.join(os.getcwd(), "desired_ilvl.json")
-        self.path_to_desired_ilvl_list = os.path.join(os.getcwd(), "desired_ilvl_list.json")
+        self.token_auth_url = "http://api.saddlebagexchange.com/api/wow/checkmegatoken"
+
+        self.eu_connected_realms = os.path.join(os.getcwd(), "data", "eu-wow-connected-realm-ids.json")
+        self.na_connected_realms = os.path.join(os.getcwd(), "data", "na-wow-connected-realm-ids.json")
+
+        self.path_to_data = os.path.join(os.getcwd(), "data", "mega_data.json")
+        self.path_to_desired_items = os.path.join(os.getcwd(), "data", "desired_items.json")
+        self.path_to_desired_pets = os.path.join(os.getcwd(), "data", "desired_pets.json")
+        self.path_to_desired_ilvl_items = os.path.join(os.getcwd(), "data", "desired_ilvl.json")
+        self.path_to_desired_ilvl_list = os.path.join(os.getcwd(), "data", "desired_ilvl_list.json")
 
         self.pet_list = {}
+        self.items_list = {}
 
         self.initUI()
 
@@ -79,19 +87,20 @@ class App(QMainWindow):
         self.discord_webhook_input=LabelTextbox(self,"Discord Webhook",25,25,425,40)
         self.wow_client_id_input=LabelTextbox(self,"WoW Client ID",25,100,425,40)
         self.wow_client_secret_input=LabelTextbox(self,"WoW Client Secret",25,175,425,40)
+        self.authentication_token=LabelTextbox(self,"Authentication Token",25,250,425,40)
 
-        self.wow_region_label = LabelText(self, 'Wow Region', 25, 250, 200, 40)
-        self.wow_region=ComboBoxes(self,25,250,200,40)
+        self.wow_region_label = LabelText(self, 'Wow Region', 25, 325, 200, 40)
+        self.wow_region=ComboBoxes(self,25,325,200,40)
         self.wow_region.Combo.addItems(['EU','NA'])
 
-        self.show_bid_prices_label = LabelText(self, 'Show Bid Prices', 25, 325, 200, 40)
-        self.show_bid_prices=ComboBoxes(self,25,325,200,40)
+        self.show_bid_prices_label = LabelText(self, 'Show Bid Prices', 25, 400, 200, 40)
+        self.show_bid_prices=ComboBoxes(self,25,400,200,40)
         self.show_bid_prices.Combo.addItems(['True','False'])
 
-        self.number_of_mega_threads=LabelTextbox(self,"Number of Threads",250,250,200,40)
+        self.number_of_mega_threads=LabelTextbox(self,"Number of Threads",250,325,200,40)
 
-        self.wow_head_link_label = LabelText(self, 'Show WoWHead Link', 250, 325, 200, 40)
-        self.wow_head_link=ComboBoxes(self,250,325,200,40)
+        self.wow_head_link_label = LabelText(self, 'Show WoWHead Link', 250, 400, 200, 40)
+        self.wow_head_link=ComboBoxes(self,250,400,200,40)
         self.wow_head_link.Combo.addItems(['True','False'])
 
         self.start_button = UIButtons(self, "Start Alerts", 25, 600, 200, 50)
@@ -100,6 +109,8 @@ class App(QMainWindow):
         self.stop_button = UIButtons(self, "Stop Alerts", 250, 600, 200, 50)
         self.stop_button.Button.clicked.connect(self.stop_alerts)
         self.stop_button.Button.setEnabled(False)
+
+        ########################## PET STUFF ###################################################
 
         self.pet_id_input=LabelTextbox(self,"Pet ID",500,25,100,40)
         self.pet_price_input=LabelTextbox(self,"Price",625,25,100,40)
@@ -112,24 +123,49 @@ class App(QMainWindow):
         self.pet_list_display = ListView(self,500,175,225,400)
         self.pet_list_display.List.itemDoubleClicked.connect(self.pet_list_double_clicked)
 
+        ########################## ITEM STUFF ###################################################
+
+        self.item_id_input=LabelTextbox(self,"Item ID",750,25,100,40)
+        self.item_price_input=LabelTextbox(self,"Price",875,25,100,40)
+
+        self.add_item_button = UIButtons(self, "Add Item", 750, 100, 100, 50)
+        self.add_item_button.Button.clicked.connect(self.add_item_to_dict)
+        self.remove_item_button = UIButtons(self, "Remove\nItem", 875, 100, 100, 50)
+        self.remove_item_button.Button.clicked.connect(self.remove_item_to_dict)
+
+        self.item_list_display = ListView(self,750,175,225,400)
+        self.item_list_display.List.itemDoubleClicked.connect(self.item_list_double_clicked)
+
         self.check_for_settings()
 
         self.show()
 
-    def pet_list_double_clicked(self,item):
-        item_split = item.text().replace(' ', '').split(':')
-        pet_id = item_split[1].split(',')[0]
-        self.pet_id_input.Text.setText(pet_id)
-        self.pet_price_input.Text.setText(item_split[2])
-
     def check_for_settings(self):
+
+        data_folder = os.path.join(os.getcwd(), "data")
+        if not os.path.exists(data_folder):
+            os.makedirs(data_folder)
+
+        if not os.path.exists(self.eu_connected_realms):
+            from utils.realm_data import EU_CONNECTED_REALMS_IDS
+
+            with open(self.eu_connected_realms, 'w') as json_file:
+                json.dump(EU_CONNECTED_REALMS_IDS, json_file, indent=4)
+
+        if not os.path.exists(self.na_connected_realms):
+            from utils.realm_data import NA_CONNECTED_REALMS_IDS
+
+            with open(self.na_connected_realms, 'w') as json_file:
+                json.dump(NA_CONNECTED_REALMS_IDS, json_file, indent=4)
+
         if os.path.exists(self.path_to_data):
             raw_mega_data = json.load(open(self.path_to_data))
 
-            if len(raw_mega_data) == 8:
+            try:
                 self.discord_webhook_input.Text.setText(raw_mega_data['MEGA_WEBHOOK_URL'])
                 self.wow_client_id_input.Text.setText(raw_mega_data['WOW_CLIENT_ID'])
                 self.wow_client_secret_input.Text.setText(raw_mega_data['WOW_CLIENT_SECRET'])
+                self.authentication_token.Text.setText(raw_mega_data['AUTHENTICATION_TOKEN'])
 
                 index=self.wow_region.Combo.findText(raw_mega_data['WOW_REGION'])
                 if index>=0:
@@ -144,11 +180,49 @@ class App(QMainWindow):
                 index=self.wow_head_link.Combo.findText(str(raw_mega_data['WOWHEAD_LINK']))
                 if index>=0:
                     self.wow_head_link.Combo.setCurrentIndex(index)
+            except:
+                QMessageBox.critical(self, "Loading Error", "Could not load config settings from mega_data.json")
+                
 
         if os.path.exists(self.path_to_desired_pets):
             self.pet_list = json.load(open(self.path_to_desired_pets))
             for key,value in self.pet_list.items():
                 self.pet_list_display.List.insertItem(self.pet_list_display.List.count() , f'Pet ID: {key}, Price: {value}')
+
+        if os.path.exists(self.path_to_desired_items):
+            self.items_list = json.load(open(self.path_to_desired_items))
+            for key,value in self.items_list.items():
+                self.item_list_display.List.insertItem(self.item_list_display.List.count() , f'Item ID: {key}, Price: {value}')
+
+    def item_list_double_clicked(self,item):
+        item_split = item.text().replace(' ', '').split(':')
+        item_id = item_split[1].split(',')[0]
+        self.item_id_input.Text.setText(item_id)
+        self.item_price_input.Text.setText(item_split[2])
+
+    def add_item_to_dict(self):
+        if self.item_id_input.Text.text() == "" or self.item_price_input.Text.text() == "":
+            return 0
+        
+        if self.item_id_input.Text.text() not in self.items_list:
+            self.items_list[self.item_id_input.Text.text()] = self.item_price_input.Text.text()
+            self.item_list_display.List.insertItem(self.item_list_display.List.count() , f'Item ID: {self.item_id_input.Text.text()}, Price: {self.item_price_input.Text.text()}')
+
+    def remove_item_to_dict(self):
+        if self.item_id_input.Text.text() in self.items_list:
+            for x in range(self.item_list_display.List.count()):
+                if self.item_list_display.List.item(x).text() == f'Item ID: {self.item_id_input.Text.text()}, Price: {self.items_list[self.item_id_input.Text.text()]}':
+
+                    self.item_list_display.List.takeItem(x)
+                    del self.items_list[self.item_id_input.Text.text()]
+                    return
+
+
+    def pet_list_double_clicked(self,item):
+        item_split = item.text().replace(' ', '').split(':')
+        pet_id = item_split[1].split(',')[0]
+        self.pet_id_input.Text.setText(pet_id)
+        self.pet_price_input.Text.setText(item_split[2])
 
     def add_pet_to_dict(self):
         if self.pet_id_input.Text.text() == "" or self.pet_price_input.Text.text() == "":
@@ -167,7 +241,25 @@ class App(QMainWindow):
                     del self.pet_list[self.pet_id_input.Text.text()]
                     return
 
+
     def start_alerts(self):
+
+        response = requests.post(self.token_auth_url, json={"token":f"{self.authentication_token.Text.text()}"})
+
+        response_dict = response.json()
+
+        if response.status_code != 200:
+            QMessageBox.critical(self, "Request Error", f"Could not reach server, status code : {response.status_code}")
+            return
+
+        if len(response_dict) == 0 :
+            QMessageBox.critical(self, "Authentication Token", "Please provide a valid authentication token!")
+            return
+
+        if not response_dict['succeeded']:
+            QMessageBox.critical(self, "Authentication Token", "Please provide a valid authentication token!")
+            return
+        
         self.start_button.Button.setEnabled(False)
         self.stop_button.Button.setEnabled(True)
 
@@ -175,11 +267,12 @@ class App(QMainWindow):
             'MEGA_WEBHOOK_URL': self.discord_webhook_input.Text.text(),
             'WOW_CLIENT_ID': self.wow_client_id_input.Text.text(),
             'WOW_CLIENT_SECRET': self.wow_client_secret_input.Text.text(),
+            'AUTHENTICATION_TOKEN': self.authentication_token.Text.text(),
             'WOW_REGION': self.wow_region.Combo.currentText(),
             'EXTRA_ALERTS': '[]',
-            'SHOW_BID_PRICES': bool(self.show_bid_prices.Combo.currentData()),
+            'SHOW_BID_PRICES': bool(self.show_bid_prices.Combo.currentText() == "True"),
             'MEGA_THREADS': int(self.number_of_mega_threads.Text.text()),
-            'WOWHEAD_LINK': bool(self.wow_head_link.Combo.currentData())
+            'WOWHEAD_LINK': bool(self.wow_head_link.Combo.currentText() == "True")
         }
 
         with open(self.path_to_data, 'w') as json_file:
@@ -187,6 +280,9 @@ class App(QMainWindow):
 
         with open(self.path_to_desired_pets, 'w') as json_file:
             json.dump(self.pet_list, json_file, indent=4)
+
+        with open(self.path_to_desired_items, 'w') as json_file:
+            json.dump(self.items_list, json_file, indent=4)
 
         self.alerts_thread = alerts(
             self.path_to_data,
@@ -197,6 +293,7 @@ class App(QMainWindow):
             )
         self.alerts_thread.start()
         self.alerts_thread.finished.connect(self.alerts_thread_finished)
+
 
     def stop_alerts(self):
         self.alerts_thread.running=False
