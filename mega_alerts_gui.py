@@ -132,7 +132,7 @@ class App(QMainWindow):
         self.remove_pet_button.Button.clicked.connect(self.remove_pet_to_dict)
 
         self.pet_list_display = ListView(self,500,175,225,400)
-        self.pet_list_display.List.itemDoubleClicked.connect(self.pet_list_double_clicked)
+        self.pet_list_display.List.itemClicked.connect(self.pet_list_double_clicked)
 
         ########################## ITEM STUFF ###################################################
 
@@ -145,7 +145,7 @@ class App(QMainWindow):
         self.remove_item_button.Button.clicked.connect(self.remove_item_to_dict)
 
         self.item_list_display = ListView(self,750,175,225,400)
-        self.item_list_display.List.itemDoubleClicked.connect(self.item_list_double_clicked)
+        self.item_list_display.List.itemClicked.connect(self.item_list_double_clicked)
 
         ########################## ILVL STUFF ###################################################
 
@@ -164,7 +164,7 @@ class App(QMainWindow):
         self.remove_ilvl_button.Button.clicked.connect(self.remove_ilvl_to_list)
 
         self.ilvl_list_display = ListView(self,1125,25,500,600)
-        self.ilvl_list_display.List.itemDoubleClicked.connect(self.ilvl_list_double_clicked)
+        self.ilvl_list_display.List.itemClicked.connect(self.ilvl_list_double_clicked)
 
         self.check_for_settings()
 
@@ -226,7 +226,7 @@ class App(QMainWindow):
         if os.path.exists(self.path_to_desired_ilvl_list):
             self.ilvl_list = json.load(open(self.path_to_desired_ilvl_list))
             for ilvl_dict_data in self.ilvl_list:
-                string_with_data = f"Item ID: {",".join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}"
+                string_with_data = f"Item ID: {','.join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}"
                 self.ilvl_list_display.List.insertItem(self.ilvl_list_display.List.count() , string_with_data)
 
 
@@ -270,8 +270,8 @@ class App(QMainWindow):
         }
         if ilvl_dict_data not in self.ilvl_list:
             self.ilvl_list.append(ilvl_dict_data)
-            self.ilvl_list_display.List.insertItem(self.ilvl_list_display.List.count() , 
-                                                   f"Item ID: {",".join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}")
+            self.ilvl_list_display.List.insertItem(self.ilvl_list_display.List.count() ,
+                                                   f"Item ID: {','.join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}")
 
     def remove_ilvl_to_list(self):
         if len(self.ilvl_input.Text.text()) == 0:
@@ -293,7 +293,7 @@ class App(QMainWindow):
         }
 
         if ilvl_dict_data in self.ilvl_list:
-            string_with_data = f"Item ID: {",".join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}"
+            string_with_data = f"Item ID: {','.join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}"
             print(string_with_data)
             for x in range(self.ilvl_list_display.List.count()):
                 if self.ilvl_list_display.List.item(x).text() == string_with_data:
@@ -311,7 +311,7 @@ class App(QMainWindow):
     def add_item_to_dict(self):
         if self.item_id_input.Text.text() == "" or self.item_price_input.Text.text() == "":
             return 0
-        
+
         if self.item_id_input.Text.text() not in self.items_list:
             self.items_list[self.item_id_input.Text.text()] = self.item_price_input.Text.text()
             self.item_list_display.List.insertItem(self.item_list_display.List.count() , f'Item ID: {self.item_id_input.Text.text()}, Price: {self.item_price_input.Text.text()}')
@@ -424,7 +424,7 @@ class App(QMainWindow):
         self.mega_alerts_progress.Label.setText(progress_str)
 
 if __name__ == '__main__':
-    
+
     app = QApplication(sys.argv)
     ex = App()
     exit(app.exec_())

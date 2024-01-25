@@ -23,7 +23,7 @@ RUN mkdir /app/user_data/
 RUN mkdir /app/user_data/mega/
 RUN mkdir /app/user_data/simple/
 RUN mkdir /app/utils/
-COPY ./mega-alerts.py /app/
+COPY ./mega_alerts.py /app/
 COPY ./utils/* /app/utils/
 COPY ./data/* /app/data/
 COPY ./user_data/mega/* /app/user_data/mega/
