@@ -3,19 +3,13 @@
 # Alpine is chosen for its small footprint
 # compared to Ubuntu
 
-FROM python:3.7-alpine3.16
+FROM python:slim-bookworm
 
-RUN apk -v --update add \
-      python3 \
-      py-pip \
-      bash \
-      && \
-      pip3 install --upgrade \
-      requests \
-      tenacity \
-      && \
-      apk -v --purge del && \
-      rm /var/cache/apk/*
+RUN pip3 install tenacity requests PyQt5 \
+    && apt-get update \
+    && apt-get install -y libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
 
 WORKDIR /app
 RUN mkdir /app/data/
@@ -31,9 +25,9 @@ COPY ./user_data/simple/* /app/user_data/simple/
 COPY ./run /app/
 RUN chmod +x /app/*
 
-CMD /app/run
+CMD ["python3", "/app/mega_alerts.py"]
 
-## run local
+# run local
 #  docker run -dit \
 #      --name wow-test \
 #      --env WOW_REGION=NA \
