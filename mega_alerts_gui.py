@@ -121,8 +121,8 @@ class App(QMainWindow):
         self.show_bid_prices = CheckBox(self, 'Show Bid Prices', 25, 375, 200, 40)
         self.wow_head_link = CheckBox(self, 'Show WoWHead Link', 25, 405, 200, 40)
         self.russian_realms = CheckBox(self, 'No Russian Realms', 25, 435, 200, 40)
-        self.refresh_alerts = CheckBox(self, 'Refresh Alerts', 25, 465, 550, 40)
-        self.debug_mode = CheckBox(self, 'Debug Mode', 25, 495, 550, 40)
+        self.refresh_alerts = CheckBox(self, 'Refresh Alerts', 25, 465, 200, 40)
+        self.debug_mode = CheckBox(self, 'Debug Mode', 25, 495, 200, 40)
 
         self.import_config_button = UIButtons(self, "Import Config", 25, 550, 200, 50)
         self.import_config_button.Button.clicked.connect(self.import_configs)
@@ -449,6 +449,21 @@ class App(QMainWindow):
         self.ilvl_list_display.List.clear()
         self.pet_list_display.List.clear()
         self.item_list_display.List.clear()
+
+        self.discord_webhook_input.Text.setText(''),
+        self.wow_client_id_input.Text.setText(''),
+        self.wow_client_secret_input.Text.setText(''),
+        self.authentication_token.Text.setText(''),
+        self.show_bid_prices.Checkbox.setChecked(False),
+        self.number_of_mega_threads.Text.setText('1'),
+        self.wow_head_link.Checkbox.setChecked(False),
+        self.important_emoji.Text.setText(''),
+        self.russian_realms.Checkbox.setChecked(False),
+        self.refresh_alerts.Checkbox.setChecked(False),
+        self.scan_time_max.Text.setText('1'),
+        self.scan_time_min.Text.setText('3'),
+        self.debug_mode.Checkbox.setChecked(False)
+
 
         self.pet_list = {}
         self.items_list = {}
