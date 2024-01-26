@@ -102,15 +102,18 @@ class App(QMainWindow):
         self.wow_region=ComboBoxes(self,25,325,200,40)
         self.wow_region.Combo.addItems(['EU','NA'])
 
-        self.show_bid_prices_label = LabelText(self, 'Show Bid Prices', 25, 400, 200, 40)
-        self.show_bid_prices=ComboBoxes(self,25,400,200,40)
-        self.show_bid_prices.Combo.addItems(['True','False'])
-
         self.number_of_mega_threads=LabelTextbox(self,"Number of Threads",250,325,200,40)
+        self.scan_time_min=LabelTextbox(self,"Scan Time Min",250,400,200,40)
+        self.scan_time_min.Text.setText('1')
+        self.scan_time_max=LabelTextbox(self,"Scan Time Max",250,475,200,40)
+        self.scan_time_max.Text.setText('3')
+        self.important_emoji=LabelTextbox(self,"Important Emoji",250,550,200,40)
 
-        self.wow_head_link_label = LabelText(self, 'Show WoWHead Link', 250, 400, 200, 40)
-        self.wow_head_link=ComboBoxes(self,250,400,200,40)
-        self.wow_head_link.Combo.addItems(['True','False'])
+        self.show_bid_prices = CheckBox(self, 'Show Bid Prices', 25, 375, 200, 40)
+        self.wow_head_link = CheckBox(self, 'Show WoWHead Link', 25, 400, 200, 40)
+        self.russian_realms = CheckBox(self, 'No Russian Realms', 25, 425, 200, 40)
+        self.refresh_alerts = CheckBox(self, 'Refresh Alerts', 25, 450, 550, 40)
+        self.debug_mode = CheckBox(self, 'Debug Mode', 25, 475, 550, 40)
 
         self.import_config_button = UIButtons(self, "Import Config", 25, 750, 200, 50)
         self.import_config_button.Button.clicked.connect(self.import_configs)
@@ -211,17 +214,14 @@ class App(QMainWindow):
                     self.wow_region.Combo.setCurrentIndex(index)
 
             if 'SHOW_BID_PRICES' in raw_mega_data:
-                index=self.show_bid_prices.Combo.findText(str(raw_mega_data['SHOW_BID_PRICES']))
-                if index>=0:
-                    self.show_bid_prices.Combo.setCurrentIndex(index)
+                self.show_bid_prices.Checkbox.setChecked(raw_mega_data['SHOW_BID_PRICES'])
 
             if 'MEGA_THREADS' in raw_mega_data:
                 self.number_of_mega_threads.Text.setText(str(raw_mega_data['MEGA_THREADS']))
 
             if 'WOWHEAD_LINK' in raw_mega_data:
-                index=self.wow_head_link.Combo.findText(str(raw_mega_data['WOWHEAD_LINK']))
-                if index>=0:
-                    self.wow_head_link.Combo.setCurrentIndex(index)
+                self.wow_head_link.Checkbox.setChecked(raw_mega_data['WOWHEAD_LINK'])
+
 
         except:
             QMessageBox.critical(self, "Loading Error", "Could not load config settings from mega_data.json")
@@ -438,13 +438,19 @@ class App(QMainWindow):
             'AUTHENTICATION_TOKEN': self.authentication_token.Text.text(),
             'WOW_REGION': self.wow_region.Combo.currentText(),
             'EXTRA_ALERTS': '[]',
-            'SHOW_BID_PRICES': bool(self.show_bid_prices.Combo.currentText() == "True"),
+            'SHOW_BID_PRICES': self.show_bid_prices.Checkbox.isChecked(),
             'MEGA_THREADS': int(self.number_of_mega_threads.Text.text()),
-            'WOWHEAD_LINK': bool(self.wow_head_link.Combo.currentText() == "True")
+            'WOWHEAD_LINK': self.wow_head_link.Checkbox.isChecked(),
+            'IMPORTANT_EMOJI': self.important_emoji.Text.text(),
+            'NO_RUSSIAN_REALMS': self.russian_realms.Checkbox.isChecked(),
+            'REFRESH_ALERTS': self.refresh_alerts.Checkbox.isChecked(),
+            'SCAN_TIME_MAX': int(self.scan_time_max.Text.text()),
+            'SCAN_TIME_MIN': int(self.scan_time_min.Text.text()),
+            'DEBUG': self.debug_mode.Checkbox.isChecked()
         }
 
-        with open(self.path_to_data, 'w') as json_file:
-            json.dump(config_json, json_file, indent=4)
+        with open(self.path_to_data, 'w', encoding="utf-8") as json_file:
+            json.dump(config_json, json_file, ensure_ascii=False, indent=4)
 
         with open(self.path_to_desired_pets, 'w') as json_file:
             json.dump(self.pet_list, json_file, indent=4)

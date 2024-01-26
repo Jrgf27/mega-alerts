@@ -33,6 +33,9 @@ class Alerts(QThread):
             if not clean_auctions:
                 return
             for auction in clean_auctions:
+                if not self.running:
+                    break
+            
                 if "itemID" in auction:
                     id_msg = f"`itemID:` {auction['itemID']}\n"
                     if "tertiary_stats" in auction:
@@ -427,6 +430,11 @@ class Alerts(QThread):
         print("Sleep 10 sec on start to avoid spamming the api")
         time.sleep(10)
 
+        if not self.running:
+            self.progress.emit("Stopped alerts!")
+            self.completed.emit(1)
+            return
+
         #### GLOBALS ####
         alert_record = []
         mega_data = utils.mega_data_setup.MegaData(
@@ -435,6 +443,11 @@ class Alerts(QThread):
             self.path_to_desired_pets,
             self.path_to_desired_ilvl_items,
             self.path_to_desired_ilvl_list)
+
+        if not self.running:
+            self.progress.emit("Stopped alerts!")
+            self.completed.emit(1)
+            return
 
         # start app here
         if os.getenv("DEBUG"):
@@ -460,9 +473,19 @@ class Alerts(QThread):
             )
             time.sleep(1)
 
+            if not self.running:
+                self.progress.emit("Stopped alerts!")
+                self.completed.emit(1)
+                return
+        
             # im sick of idiots asking me about the waiting time just run once on startup
             main_fast()
 
+            if not self.running:
+                self.progress.emit("Stopped alerts!")
+                self.completed.emit(1)
+                return
+            
             # then run the main loop
             main()
 
