@@ -193,7 +193,7 @@ class App(QMainWindow):
         self.show()
 
     def check_config_file(self, path_to_config):
-        raw_mega_data = json.load(open(path_to_config))
+        raw_mega_data = json.load(open(path_to_config, encoding="utf-8"))
 
         try:
             if 'MEGA_WEBHOOK_URL' in raw_mega_data:
@@ -222,6 +222,23 @@ class App(QMainWindow):
             if 'WOWHEAD_LINK' in raw_mega_data:
                 self.wow_head_link.Checkbox.setChecked(raw_mega_data['WOWHEAD_LINK'])
 
+            if 'IMPORTANT_EMOJI' in raw_mega_data:
+                self.important_emoji.Text.setText(raw_mega_data['IMPORTANT_EMOJI'])
+
+            if 'NO_RUSSIAN_REALMS' in raw_mega_data:
+                self.russian_realms.Checkbox.setChecked(raw_mega_data['NO_RUSSIAN_REALMS'])
+
+            if 'REFRESH_ALERTS' in raw_mega_data:
+                self.refresh_alerts.Checkbox.setChecked(raw_mega_data['REFRESH_ALERTS'])
+
+            if 'SCAN_TIME_MAX' in raw_mega_data:
+                self.scan_time_max.Text.setText(str(raw_mega_data['SCAN_TIME_MAX']))
+
+            if 'SCAN_TIME_MIN' in raw_mega_data:
+                self.scan_time_min.Text.setText(str(raw_mega_data['SCAN_TIME_MIN']))
+
+            if 'DEBUG' in raw_mega_data:
+                self.debug_mode.Checkbox.setChecked(raw_mega_data['DEBUG'])
 
         except:
             QMessageBox.critical(self, "Loading Error", "Could not load config settings from mega_data.json")
