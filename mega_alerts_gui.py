@@ -1,10 +1,16 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox, QCheckBox, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox, QCheckBox, QFileDialog, QSystemTrayIcon
 from PyQt5 import QtGui
+from PyQt5.QtGui import QIcon
 import sys, os
 import requests
 from sys import exit
 import json
 from mega_alerts import Alerts
+
+import ctypes
+
+myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
 class LabelTextbox(QMainWindow):
@@ -68,7 +74,10 @@ class App(QMainWindow):
         self.left = 0
         self.top = 0
         self.width = 1650
-        self.height = 1000
+        self.height = 800
+
+        icon = QIcon('icon.png')
+        self.setWindowIcon(icon)
 
         self.token_auth_url = "http://api.saddlebagexchange.com/api/wow/checkmegatoken"
 
@@ -110,28 +119,28 @@ class App(QMainWindow):
         self.important_emoji=LabelTextbox(self,"Important Emoji",250,550,200,40)
 
         self.show_bid_prices = CheckBox(self, 'Show Bid Prices', 25, 375, 200, 40)
-        self.wow_head_link = CheckBox(self, 'Show WoWHead Link', 25, 400, 200, 40)
-        self.russian_realms = CheckBox(self, 'No Russian Realms', 25, 425, 200, 40)
-        self.refresh_alerts = CheckBox(self, 'Refresh Alerts', 25, 450, 550, 40)
-        self.debug_mode = CheckBox(self, 'Debug Mode', 25, 475, 550, 40)
+        self.wow_head_link = CheckBox(self, 'Show WoWHead Link', 25, 405, 200, 40)
+        self.russian_realms = CheckBox(self, 'No Russian Realms', 25, 435, 200, 40)
+        self.refresh_alerts = CheckBox(self, 'Refresh Alerts', 25, 465, 550, 40)
+        self.debug_mode = CheckBox(self, 'Debug Mode', 25, 495, 550, 40)
 
-        self.import_config_button = UIButtons(self, "Import Config", 25, 750, 200, 50)
+        self.import_config_button = UIButtons(self, "Import Config", 25, 550, 200, 50)
         self.import_config_button.Button.clicked.connect(self.import_configs)
 
-        self.save_data_button = UIButtons(self, "Save Data", 25, 825, 200, 50)
+        self.save_data_button = UIButtons(self, "Save Data", 25, 625, 200, 50)
         self.save_data_button.Button.clicked.connect(self.save_data_to_json)
 
-        self.reset_data_button = UIButtons(self, "Reset Data", 250, 825, 200, 50)
+        self.reset_data_button = UIButtons(self, "Reset Data", 250, 625, 200, 50)
         self.reset_data_button.Button.clicked.connect(self.reset_app_data)
 
-        self.start_button = UIButtons(self, "Start Alerts", 25, 900, 200, 50)
+        self.start_button = UIButtons(self, "Start Alerts", 25, 700, 200, 50)
         self.start_button.Button.clicked.connect(self.start_alerts)
 
-        self.stop_button = UIButtons(self, "Stop Alerts", 250, 900, 200, 50)
+        self.stop_button = UIButtons(self, "Stop Alerts", 250, 700, 200, 50)
         self.stop_button.Button.clicked.connect(self.stop_alerts)
         self.stop_button.Button.setEnabled(False)
 
-        self.mega_alerts_progress = LabelText(self, 'Waiting for user to Start!', 25, 975, 1000, 40)
+        self.mega_alerts_progress = LabelText(self, 'Waiting for user to Start!', 25, 775, 1000, 40)
 
         ########################## PET STUFF ###################################################
 
