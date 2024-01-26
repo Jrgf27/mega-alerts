@@ -68,7 +68,7 @@ class App(QMainWindow):
         self.left = 0
         self.top = 0
         self.width = 1650
-        self.height = 750
+        self.height = 1000
 
         self.token_auth_url = "http://api.saddlebagexchange.com/api/wow/checkmegatoken"
 
@@ -112,14 +112,20 @@ class App(QMainWindow):
         self.wow_head_link=ComboBoxes(self,250,400,200,40)
         self.wow_head_link.Combo.addItems(['True','False'])
 
-        self.start_button = UIButtons(self, "Start Alerts", 25, 600, 200, 50)
+        self.start_button = UIButtons(self, "Start Alerts", 25, 900, 200, 50)
         self.start_button.Button.clicked.connect(self.start_alerts)
 
-        self.stop_button = UIButtons(self, "Stop Alerts", 250, 600, 200, 50)
+        self.stop_button = UIButtons(self, "Stop Alerts", 250, 900, 200, 50)
         self.stop_button.Button.clicked.connect(self.stop_alerts)
         self.stop_button.Button.setEnabled(False)
 
-        self.mega_alerts_progress = LabelText(self, 'Waiting for user to Start!', 25, 675, 1000, 40)
+        self.save_data_button = UIButtons(self, "Save Data", 25, 825, 200, 50)
+        self.save_data_button.Button.clicked.connect(self.save_data_to_json)
+
+        self.reset_data_button = UIButtons(self, "Reset Data", 250, 825, 200, 50)
+        self.reset_data_button.Button.clicked.connect(self.reset_app_data)
+
+        self.mega_alerts_progress = LabelText(self, 'Waiting for user to Start!', 25, 975, 1000, 40)
 
         ########################## PET STUFF ###################################################
 
@@ -350,27 +356,19 @@ class App(QMainWindow):
                     return
 
 
-    def start_alerts(self):
+    def reset_app_data(self):
+        self.ilvl_list_display.List.clear()
+        self.pet_list_display.List.clear()
+        self.item_list_display.List.clear()
 
-        response = requests.post(self.token_auth_url, json={"token":f"{self.authentication_token.Text.text()}"})
+        self.pet_list = {}
+        self.items_list = {}
+        self.ilvl_list = []
 
-        response_dict = response.json()
+        self.save_data_to_json()
 
-        if response.status_code != 200:
-            QMessageBox.critical(self, "Request Error", f"Could not reach server, status code : {response.status_code}")
-            return
 
-        if len(response_dict) == 0:
-            QMessageBox.critical(self, "Auction Assassin Token", "Please provide a valid Auction Assassin token!")
-            return
-
-        if not response_dict['succeeded']:
-            QMessageBox.critical(self, "Auction Assassin Token", "Please provide a valid Auction Assassin token!")
-            return
-        
-        self.start_button.Button.setEnabled(False)
-        self.stop_button.Button.setEnabled(True)
-
+    def save_data_to_json(self):
         config_json = {
             'MEGA_WEBHOOK_URL': self.discord_webhook_input.Text.text(),
             'WOW_CLIENT_ID': self.wow_client_id_input.Text.text(),
@@ -397,6 +395,29 @@ class App(QMainWindow):
         
         with open(self.path_to_desired_ilvl_items, 'w') as json_file:
             json.dump(self.ilvl_items, json_file, indent=4)
+
+    def start_alerts(self):
+
+        response = requests.post(self.token_auth_url, json={"token":f"{self.authentication_token.Text.text()}"})
+
+        response_dict = response.json()
+
+        if response.status_code != 200:
+            QMessageBox.critical(self, "Request Error", f"Could not reach server, status code : {response.status_code}")
+            return
+
+        if len(response_dict) == 0:
+            QMessageBox.critical(self, "Auction Assassin Token", "Please provide a valid Auction Assassin token!")
+            return
+
+        if not response_dict['succeeded']:
+            QMessageBox.critical(self, "Auction Assassin Token", "Please provide a valid Auction Assassin token!")
+            return
+
+        self.start_button.Button.setEnabled(False)
+        self.stop_button.Button.setEnabled(True)
+
+        self.save_data_to_json()
 
         self.alerts_thread = Alerts(
             path_to_data_files = self.path_to_data,
