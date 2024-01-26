@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox, QCheckBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QPushButton, QComboBox, QListWidget, QMessageBox, QCheckBox, QFileDialog
 from PyQt5 import QtGui
 import sys, os
 import requests
@@ -112,18 +112,21 @@ class App(QMainWindow):
         self.wow_head_link=ComboBoxes(self,250,400,200,40)
         self.wow_head_link.Combo.addItems(['True','False'])
 
-        self.start_button = UIButtons(self, "Start Alerts", 25, 900, 200, 50)
-        self.start_button.Button.clicked.connect(self.start_alerts)
-
-        self.stop_button = UIButtons(self, "Stop Alerts", 250, 900, 200, 50)
-        self.stop_button.Button.clicked.connect(self.stop_alerts)
-        self.stop_button.Button.setEnabled(False)
+        self.import_config_button = UIButtons(self, "Import Config", 25, 750, 200, 50)
+        self.import_config_button.Button.clicked.connect(self.import_configs)
 
         self.save_data_button = UIButtons(self, "Save Data", 25, 825, 200, 50)
         self.save_data_button.Button.clicked.connect(self.save_data_to_json)
 
         self.reset_data_button = UIButtons(self, "Reset Data", 250, 825, 200, 50)
         self.reset_data_button.Button.clicked.connect(self.reset_app_data)
+
+        self.start_button = UIButtons(self, "Start Alerts", 25, 900, 200, 50)
+        self.start_button.Button.clicked.connect(self.start_alerts)
+
+        self.stop_button = UIButtons(self, "Stop Alerts", 250, 900, 200, 50)
+        self.stop_button.Button.clicked.connect(self.stop_alerts)
+        self.stop_button.Button.setEnabled(False)
 
         self.mega_alerts_progress = LabelText(self, 'Waiting for user to Start!', 25, 975, 1000, 40)
 
@@ -140,6 +143,10 @@ class App(QMainWindow):
         self.pet_list_display = ListView(self,500,175,225,400)
         self.pet_list_display.List.itemClicked.connect(self.pet_list_double_clicked)
 
+        self.import_pet_data_button = UIButtons(self, "Import Pet Data", 500, 600, 225, 50)
+        self.import_pet_data_button.Button.clicked.connect(self.import_pet_data)
+        self.import_pet_data_button.Button.setToolTip('This is a tooltip')
+
         ########################## ITEM STUFF ###################################################
 
         self.item_id_input=LabelTextbox(self,"Item ID",750,25,100,40)
@@ -152,6 +159,9 @@ class App(QMainWindow):
 
         self.item_list_display = ListView(self,750,175,225,400)
         self.item_list_display.List.itemClicked.connect(self.item_list_double_clicked)
+
+        self.import_item_data_button = UIButtons(self, "Import Item Data", 750, 600, 225, 50)
+        self.import_item_data_button.Button.clicked.connect(self.import_item_data)
 
         ########################## ILVL STUFF ###################################################
 
@@ -169,12 +179,52 @@ class App(QMainWindow):
         self.remove_ilvl_button = UIButtons(self, "Remove\nItem", 1000, 500, 100, 50)
         self.remove_ilvl_button.Button.clicked.connect(self.remove_ilvl_to_list)
 
-        self.ilvl_list_display = ListView(self,1125,25,500,600)
+        self.ilvl_list_display = ListView(self,1125,25,500,550)
         self.ilvl_list_display.List.itemClicked.connect(self.ilvl_list_double_clicked)
+
+        self.import_ilvl_data_button = UIButtons(self, "Import ILvl Data", 1125, 600, 500, 50)
+        self.import_ilvl_data_button.Button.clicked.connect(self.import_ilvl_data)
 
         self.check_for_settings()
 
         self.show()
+
+    def check_config_file(self, path_to_config):
+        raw_mega_data = json.load(open(path_to_config))
+
+        try:
+            if 'MEGA_WEBHOOK_URL' in raw_mega_data:
+                self.discord_webhook_input.Text.setText(raw_mega_data['MEGA_WEBHOOK_URL'])
+
+            if 'WOW_CLIENT_ID' in raw_mega_data:
+                self.wow_client_id_input.Text.setText(raw_mega_data['WOW_CLIENT_ID'])
+            
+            if 'WOW_CLIENT_SECRET' in raw_mega_data:
+                self.wow_client_secret_input.Text.setText(raw_mega_data['WOW_CLIENT_SECRET'])
+
+            if 'AUTHENTICATION_TOKEN' in raw_mega_data:
+                self.authentication_token.Text.setText(raw_mega_data['AUTHENTICATION_TOKEN'])
+
+            if 'WOW_REGION' in raw_mega_data:
+                index=self.wow_region.Combo.findText(raw_mega_data['WOW_REGION'])
+                if index>=0:
+                    self.wow_region.Combo.setCurrentIndex(index)
+
+            if 'SHOW_BID_PRICES' in raw_mega_data:
+                index=self.show_bid_prices.Combo.findText(str(raw_mega_data['SHOW_BID_PRICES']))
+                if index>=0:
+                    self.show_bid_prices.Combo.setCurrentIndex(index)
+
+            if 'MEGA_THREADS' in raw_mega_data:
+                self.number_of_mega_threads.Text.setText(str(raw_mega_data['MEGA_THREADS']))
+
+            if 'WOWHEAD_LINK' in raw_mega_data:
+                index=self.wow_head_link.Combo.findText(str(raw_mega_data['WOWHEAD_LINK']))
+                if index>=0:
+                    self.wow_head_link.Combo.setCurrentIndex(index)
+
+        except:
+            QMessageBox.critical(self, "Loading Error", "Could not load config settings from mega_data.json")
 
     def check_for_settings(self):
 
@@ -195,29 +245,7 @@ class App(QMainWindow):
                 json.dump(NA_CONNECTED_REALMS_IDS, json_file, indent=4)
 
         if os.path.exists(self.path_to_data):
-            raw_mega_data = json.load(open(self.path_to_data))
-
-            try:
-                self.discord_webhook_input.Text.setText(raw_mega_data['MEGA_WEBHOOK_URL'])
-                self.wow_client_id_input.Text.setText(raw_mega_data['WOW_CLIENT_ID'])
-                self.wow_client_secret_input.Text.setText(raw_mega_data['WOW_CLIENT_SECRET'])
-                self.authentication_token.Text.setText(raw_mega_data['AUTHENTICATION_TOKEN'])
-
-                index=self.wow_region.Combo.findText(raw_mega_data['WOW_REGION'])
-                if index>=0:
-                    self.wow_region.Combo.setCurrentIndex(index)
-
-                index=self.show_bid_prices.Combo.findText(str(raw_mega_data['SHOW_BID_PRICES']))
-                if index>=0:
-                    self.show_bid_prices.Combo.setCurrentIndex(index)
-
-                self.number_of_mega_threads.Text.setText(str(raw_mega_data['MEGA_THREADS']))
-
-                index=self.wow_head_link.Combo.findText(str(raw_mega_data['WOWHEAD_LINK']))
-                if index>=0:
-                    self.wow_head_link.Combo.setCurrentIndex(index)
-            except:
-                QMessageBox.critical(self, "Loading Error", "Could not load config settings from mega_data.json")
+            self.check_config_file(self.path_to_data)
                 
         if os.path.exists(self.path_to_desired_pets):
             self.pet_list = json.load(open(self.path_to_desired_pets))
@@ -307,6 +335,17 @@ class App(QMainWindow):
                     self.ilvl_list.remove(ilvl_dict_data)
                     return
 
+    def import_ilvl_data(self):
+        pathname=QFileDialog().getOpenFileName(self)[0]
+
+        self.ilvl_list_display.List.clear()
+        self.ilvl_list = {}
+
+        self.ilvl_list = json.load(open(pathname))
+        for ilvl_dict_data in self.ilvl_list:
+            string_with_data = f"Item ID: {','.join(map(str, ilvl_dict_data['item_ids']))}; Price: {ilvl_dict_data['buyout']}; ILvl: {ilvl_dict_data['ilvl']}; Sockets: {ilvl_dict_data['sockets']}; Speed: {ilvl_dict_data['speed']}; Leech: {ilvl_dict_data['leech']}; Avoidance: {ilvl_dict_data['avoidance']}"
+            self.ilvl_list_display.List.insertItem(self.ilvl_list_display.List.count() , string_with_data)
+
 
     def item_list_double_clicked(self,item):
         item_split = item.text().replace(' ', '').split(':')
@@ -330,6 +369,16 @@ class App(QMainWindow):
                     self.item_list_display.List.takeItem(x)
                     del self.items_list[self.item_id_input.Text.text()]
                     return
+
+    def import_item_data(self):
+        pathname=QFileDialog().getOpenFileName(self)[0]
+
+        self.item_list_display.List.clear()
+        self.items_list = {}
+
+        self.items_list = json.load(open(pathname))
+        for key,value in self.items_list.items():
+            self.item_list_display.List.insertItem(self.item_list_display.List.count() , f'Item ID: {key}, Price: {value}')
 
 
     def pet_list_double_clicked(self,item):
@@ -355,6 +404,20 @@ class App(QMainWindow):
                     del self.pet_list[self.pet_id_input.Text.text()]
                     return
 
+    def import_pet_data(self):
+        pathname=QFileDialog().getOpenFileName(self)[0]
+
+        self.pet_list_display.List.clear()
+        self.pet_list = {}
+
+        self.pet_list = json.load(open(pathname))
+        for key,value in self.pet_list.items():
+            self.pet_list_display.List.insertItem(self.pet_list_display.List.count() , f'Pet ID: {key}, Price: {value}')
+
+
+    def import_configs(self):
+        pathname=QFileDialog().getOpenFileName(self)[0]
+        self.check_config_file(pathname)
 
     def reset_app_data(self):
         self.ilvl_list_display.List.clear()
@@ -366,7 +429,6 @@ class App(QMainWindow):
         self.ilvl_list = []
 
         self.save_data_to_json()
-
 
     def save_data_to_json(self):
         config_json = {
